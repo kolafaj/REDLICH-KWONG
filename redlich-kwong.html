@@ -1,0 +1,351 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+   <TITLE>Redlich–Kwong equation of state calculator</TITLE>
+   <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
+   <meta name="author" content="Jiri Kolafa">
+   <META name="keywords" LANG="en" content="redlich-kwong,applet,compressibility factor,fugacity">
+<!-- History:
+     2006 Version 0
+     2020 Version 1 -- aesthetical changes, comments added, GPL3
+     2020 Version 2 -- incl. entering Pc,Tc and units
+     2020 Version 3 -- with (meta)stability detection
+     2025 Version 4 -- whites ignored in input, , replaced by .
+     2026              posted to GitHub
+-->
+
+<script language="Javascript" type="text/javascript">
+
+/* SI definition of gas constant since May 2019 */
+var R=8.31446261815324
+
+/* Redlich-Kwong reduced parameters */
+var b=0.08664034996495773; /* (2^(1/3)-1)/3 */
+var a=0.4274802335403414;  /* 1/9/(2^(1/3)-1) */
+
+/* critical temperature and pressure */
+var Tc,Pc
+
+/* conversion factors for units (Tunit is additive: 273.15) */
+var Tunit=-1,Punit=0,Vunit=0
+
+var ROUND=100000.0 /* output numbers will be rounded to log10(ROUND)+1 significant digits */
+
+/* returns pressure of the reduced RK equation */
+function pRK(T,V)
+{
+  return T/(V-b)-a/(Math.sqrt(T)*V*(V+b));
+}
+
+/* square */
+function Sqr(x)
+{
+  return x*x
+}
+
+/* Calculate volume for given (T,p).
+   sg=-1 for gas search, sg=1 for liquid search
+   Stable or metastable volumes only. */
+function VRK(T,p,sg)
+{
+  var d,q
+  var i
+  var fine=5000 /* search resolution */
+
+  if (sg<0) {
+    q=1-1.0/fine
+    V=T/p*1.1 }
+  else {
+    q=1+1.0/fine
+    V=b*1.001 }
+  for (i=0;;i++) {
+    V*=q;
+    d=pRK(T,V)-p
+    if (sg*d<0) break;
+    if (i>fine*5) {
+      //      alert("numerical problem");
+      return 0; } }
+  /* see gen/ms.c in MACSIMUS */
+  MS_eps=1e-8;
+  MS_d=MS_eps*2;
+  var MS_f, MS_der;
+  MS_lastd=1000*MS_eps;
+  MS_g=0
+  MS_it=0
+  MS_n=-2
+
+  V+=MS_eps;
+  do {
+    if (MS_it>100) return 0;
+    MS_f=pRK(T,V)-p;
+
+    if (MS_g==MS_f) {
+      MS_d*=-1.618; V+=MS_d; }
+    else {
+      if (MS_it<2) MS_der=MS_d/(MS_g-MS_f)
+      else MS_der=(MS_d/(MS_g-MS_f)*(Sqr(MS_d)+Sqr(MS_lastd))+MS_der*Sqr(MS_eps))/(Sqr(MS_d)+Sqr(MS_lastd)+Sqr(MS_eps))
+      MS_lastd=MS_d
+      MS_d=MS_f*MS_der
+      V+=MS_d }
+    MS_g=MS_f;
+    if (Math.abs(MS_d)>MS_eps) MS_n=-1; else MS_n++;
+    MS_it++; }
+  while (MS_n<1)
+
+  return V;
+}
+
+/* return evaluated expression with simple syntax check */
+function myEval(s)
+{
+  v="0123456789.eE+-/*()"
+  var i,j
+
+  /* remove leading and trailing spaces, replace , -> . */
+  ss=""
+  for (i=0; i<s.length; i++) {
+    if (s.charAt(i)==',') ss=ss+'.'
+    else if (s.charAt(i)>' ') ss=ss+s.charAt(i) }
+
+  for (i=0; i<ss.length; i++) {
+    KO=1;
+    for (j=0; j<v.length; j++)
+      if (v.charAt(j)==ss.charAt(i)) KO=0;
+    if (KO) {
+      alert("\'"+ss.charAt(i)+"\' is invalid character in \""+ss+"\"")
+      return 0; } }
+
+  return eval(ss)
+}
+
+/* rounding */
+function myRound(x)
+{
+//  return Math.round(x*1000000.0)/1000000.0
+  var q=1.0
+  if (Math.abs(x)<1e-12) return 0.0;
+  else if (Math.abs(x)<ROUND) {
+    while (Math.abs(x)<ROUND) { x*=10.0; q*=10.0; }
+    return Math.round(x)/q; }
+  else {
+    while (Math.abs(x)>ROUND*10.0) { x/=10.0; q*=10.0; }
+    return Math.round(x)*q; }
+}
+
+/* fugacity coefficient */
+function phi(T,P,V)
+{
+  z=P*V/T
+  return V/(V-b)*Math.exp(a/(T*Math.sqrt(T)*b)*Math.log(V/(V+b))+z-1)/z;
+}
+
+/* print a line of results for gas or liquid */
+function zandphi(txt,Tr,Pr,Vr)
+{
+  ID="gas"
+  if (Vr<1./3) ID="liquid"
+  if (Tr>=1) ID="fluid"
+  if (txt=="(unstable)") ID="fluid"
+  x=txt+" "
+  x+="Tr="+myRound(Tr)
+  x+=" &nbsp; Pr="+myRound(Pr)
+  x+=" &nbsp; Vr="+myRound(Vr)
+  x+=" &nbsp; Z="+myRound(Pr*Vr/Tr)
+  x+=" &nbsp; &phi;="+myRound(phi(Tr,Pr,Vr))
+  x+=" &nbsp; T="+myRound(Tr*Tc)+" K ("+myRound(Tr*Tc-273.15)+" °C)"
+  x+=" &nbsp; P="+myRound(Pr*Pc/Punit)+" "+document.RK.Punit.value
+  x+=" &nbsp; Vm="+myRound(Vr*Tc*R/Pc/Vunit)+" "+document.RK.Vunit.value
+  document.getElementById(ID).innerHTML=x
+}
+
+/* reading the values of quantities and perform calculations */
+function Calculate()
+{
+  var i
+  key=(document.RK.T.value.length==0)+(document.RK.P.value.length==0)+(document.RK.V.value.length==0)
+  if (key!=1) {
+    alert("exactly one field of {Temperature, Pressure, Molar volume} should be blank")
+    return }
+  var Vrg=0,Vrl=0,DF
+  var Vr=0,Pr=0,Tr=0
+  if (document.RK.Punit.value=="Pa") Punit=1.0
+  if (document.RK.Punit.value=="kPa") Punit=1e3
+  if (document.RK.Punit.value=="bar") Punit=1e5
+  if (document.RK.Punit.value=="atm") Punit=101325
+  if (document.RK.Punit.value=="MPa") Punit=1e6
+  if (Punit==0) { alert("pressure unit not selected"); return }
+
+  if (document.RK.Pc.value.length==0) alert("critical pressure is missing")
+  else Pc=myEval(document.RK.Pc.value)*Punit
+
+  if (document.RK.Vunit.value=="m3/mol") Vunit=1.0
+  if (document.RK.Vunit.value=="dm3/mol") Vunit=1e-3
+  if (document.RK.Vunit.value=="cm3/mol") Vunit=1e-6
+  if (Vunit==0) { alert("volume unit not selected"); return }
+
+  if (document.RK.Tunit.value=="K") Tunit=0.0
+  if (document.RK.Tunit.value=="C") Tunit=273.15
+  if (Tunit<0) { alert("temperature unit not selected"); return }
+  if (document.RK.Tc.value.length==0) alert("critical temperature is missing")
+  else Tc=myEval(document.RK.Tc.value)+Tunit
+
+  Tr=(myEval(document.RK.T.value)+Tunit)/Tc
+  Pr=myEval(document.RK.P.value)*Punit/Pc
+  Vr=myEval(document.RK.V.value)*Vunit*Pc/(R*Tc)
+
+  if (document.RK.T.value.length==0) {
+    // calculate temperature by iterations
+    if (Vr<=b) { alert("too small molar volume (Vr<=b) on input"); return }
+    Tr=1;
+    for (i=0; ; i++) {
+      Tr0=Tr;
+      Tr=(Pr+a/(Math.sqrt(Tr)*Vr*(Vr+b)))*(Vr-b);
+      if (i>5000) {
+        alert("cannot calculate temperature");
+        Tr=0; Tr0=0; }
+      if (Math.abs(Tr-Tr0)<1e-9) break; } }
+
+  if (document.RK.P.value.length==0) {
+    // calculate pressure
+    if (Vr<=b) { alert("too small molar volume (Vr<=b) on input"); return }
+    Pr=pRK(Tr,Vr) }
+
+//  alert("Pr="+Pr+"  Vrl="+Vrl+"  Vrg="+Vrg+"  DF="+DF)
+
+  // calculate volume(s) and their stability
+  if (Tr<=0) { alert("negative temperature (Tr<0)"); return 0 }
+  Vrg=VRK(Tr,Pr,-1); // init Vrg=id.gas; for Tr>1 this will give "fluid"
+  if (Vrg<=b) { alert("cannot find volume"); return; }
+  if (Tr<1) Vrl=VRK(Tr,Pr,1); // init=dense liquid
+  if (Vrl<=b) Vrl=0;
+  if (Math.abs(Vrl-Vrg)<1e-7) Vrl=0; // one root - may be gas or liquid, or close to CP
+  if (Vrg!=0 && Vrl!=0) {
+    if (Vrg<.333334 || Vrl>.333333) { alert("(l)/(g) problem"); return }
+    // two volumes found, determine the stability; this is equivalent to comparing phi
+    DF=Tr*Math.log((Vrg-b)/(Vrl-b))-a/b/Math.sqrt(Tr)*Math.log((1+b/Vrl)/(1+b/Vrg))-Pr*(Vrg-Vrl) }
+
+  if (Tr>=1) {
+    // supercritical
+    if (document.RK.V.value.length==0) Vr=Vrg
+    if (Math.abs((Vr-Vrg)/(Vr+Vrg))>1e-7) alert("internally inconsistent recalculation of volume")
+    document.getElementById("liquid").innerHTML="n.a. (system is supercritical)"
+    document.getElementById("gas").innerHTML="n.a. (system is supercritical)"
+    zandphi("",Tr,Pr,Vr) }
+  else {
+    // subcritical
+    document.getElementById("fluid").innerHTML="n.a. (system is subcritical)"
+    document.getElementById("liquid").innerHTML="n.a."
+    document.getElementById("gas").innerHTML="n.a."
+    if (document.RK.V.value.length==0) {
+      // volumes have been calculated
+      if (Vrg!=0 && Vrl!=0) {
+        if (DF>0) {
+          if (Vrg!=0) zandphi("",Tr,Pr,Vrg)
+          if (Vrl!=0) zandphi("(metastable)",Tr,Pr,Vrl) }
+        else {
+          if (Vrg!=0) zandphi("(metastable)",Tr,Pr,Vrg)
+          if (Vrl!=0) zandphi("",Tr,Pr,Vrl) } }
+      else {
+        if (Vrg!=0) zandphi("",Tr,Pr,Vrg)
+        if (Vrl!=0) zandphi("",Tr,Pr,Vrl) } }
+    else {
+      // a volume given, T/P calculated
+      if (Vrg!=0 && Vrl!=0) {
+        if (Vr>Vrl+1e-8 && Vr<Vrg-1e-7)
+          zandphi("(unstable)",Tr,Pr,Vr)
+        else if (DF>0) {
+          if (Vr>1./3) zandphi("",Tr,Pr,Vr)
+          else zandphi("(metastable)",Tr,Pr,Vr) }
+        else {
+          if (Vr>1./3) zandphi("(metastable)",Tr,Pr,Vr)
+          else zandphi("",Tr,Pr,Vr) } }
+      else {
+        zandphi("",Tr,Pr,Vr) } } }
+}
+</script>
+
+<style type="text/css">
+body {
+  font-family: "Arial", helvetica, sans-serif;
+  font-size: medium;
+}
+
+.butt {
+  background: #e9e9ed;
+}
+
+h1 {
+  font-family: "Arial", helvetica, sans-serif;
+  font-size: x-large;
+}
+
+table {
+  background: #ffffc0;
+}
+</style>
+
+</HEAD>
+
+<BODY BGCOLOR="#ffffff">
+
+<h1>Redlich–Kwong equation of state calculator (V4)</h1>
+
+<p>Calculate pressure/volume/temperature, compressibility factor, and fugacity coefficient for liquid/gas/supercritical fluid.</p>
+
+<b>Usage:</b><br>
+<ul>
+  <li>Enter the critical temperature and pressure.</li>
+  <li>Enter two of three quantities leaving blank the field to be calculated.</li>
+  <li>Select units.</li>
+  <li>Click <span class="butt">&nbsp;Calculate&nbsp;</span> to get the missing quantity, compressibility factor, and fugacity coefficient.</li>
+  <li>With T,P given, metastable and unstable phases are not calculated.</li>
+  <li>With Vm given, stability is reported for gas and liquid.</li>
+  <li>Simple expressions (e.g., 100+273.15) are accepted in input fields.</li>
+  <li>Spaces, tabs ignored in the input fields, "," is replaced by "."</li>
+</ul>
+
+<FORM NAME="RK" ACTION="dummy">
+
+<p>
+<table>
+  <tr><td align=right>Critical temperature = </td><td> <INPUT TYPE="text" name="Tc" SIZE="10"></td><td align=right>Temperature = </td><td> <INPUT TYPE="text" name="T" SIZE="10"></td><td><input type="radio" name="Tunit" value="C">  °C</td><td><input type="radio" name="Tunit" value="K"> K</td></tr>
+  <tr><td align=right>Critical pressure    = </td><td> <INPUT TYPE="text" name="Pc" SIZE="10"></td><td align=right>Pressure =    </td><td> <INPUT TYPE="text" NAME="P" SIZE="10"></td><td><input type="radio" name="Punit" value="Pa"> Pa</td><td><input type="radio" name="Punit" value="kPa"> kPa</td><td><input type="radio" name="Punit" value="bar"> bar</td><td><input type="radio" name="Punit" value="atm"> atm&nbsp;&nbsp;</td><td><input type="radio" name="Punit" value="MPa"> MPa</td></tr>
+  <tr><td><INPUT TYPE="button" onClick="Calculate()" VALUE="Calculate"></td><td></td><td align=right>Molar volume =</td><td> <INPUT TYPE="text" NAME="V" SIZE="10"></td><td><input type="radio" name="Vunit" value="m3/mol"> m³/mol</td><td><input type="radio" name="Vunit" value="dm3/mol"> dm³/mol</td><td><input type="radio" name="Vunit" value="cm3/mol"> cm³/mol</td></tr>
+</td></tr>
+</table>
+
+</FORM>
+
+<p>
+<b>Results:</b><br>
+<table>
+<tr><td align=right><b>fluid:</b></td><td><span class="res" id="fluid">n.a.</span><td></tr>
+<tr><td align=right><b>gas:</b></td><td><span class="res" id="gas">n.a.</span><td></tr>
+<tr><td align=right><b>liquid:</b></td><td><span class="res" id="liquid">n.a.</span><td></tr>
+</table>
+
+<p>
+<b>Notation:</b><br>
+&nbsp; T = temperature<br>
+&nbsp; P = pressure<br>
+&nbsp; Vm = molar volume<br>
+&nbsp; Tc = critical temperature<br>
+&nbsp; Pc = critical pressure<br>
+&nbsp; reduced quantities: Tr=T/Tc, Pr=P/Pc, Vr=Vm/(R*Tc/Pc)<br>
+&nbsp; Z = Pr*Vr/Tr= P*Vm/(R*T) = compressibility factor<br>
+&nbsp; &phi; = fugacity coefficient<br>
+&nbsp; 1&thinsp;atm = 101&thinsp;325&thinsp;Pa, 1&thinsp;bar = 100&thinsp;000&thinsp;Pa
+
+<p>
+  <a href="https://github.com/kolafaj/Redlich-Kwong/RK.pdf">Theory</a> &ndash;
+  <a href="http://old.vscht.cz/fch/cz/pomucky/fchab/fchab03.pdf#page=10">Theory (in Czech)</a> &ndash;
+  <a href="http://old.vscht.cz/fch/prikladnik/prikladnik/tab/dot-crit.html">Critical data of selected gases</a> (in Czech) &ndash;
+  <a href="http://old.vscht.cz/fch/software/redlich-kwong-index.html">Previous versions</a>
+</p>
+
+<p>
+<b>Author:</b><br>
+&copy; Jiří Kolafa (2006–2026) by the <a href="http://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License 3</a>
+</p>
+</BODY>
+</HTML>
