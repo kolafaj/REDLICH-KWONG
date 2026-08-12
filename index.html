@@ -176,9 +176,9 @@ function Calculate()
   if (document.RK.Pc.value.length==0) alert("critical pressure is missing")
   else Pc=myEval(document.RK.Pc.value)*Punit
 
-  if (document.RK.Vunit.value=="m3/mol") Vunit=1.0
-  if (document.RK.Vunit.value=="dm3/mol") Vunit=1e-3
-  if (document.RK.Vunit.value=="cm3/mol") Vunit=1e-6
+  if (document.RK.Vunit.value=="m³/mol") Vunit=1.0
+  if (document.RK.Vunit.value=="dm³/mol") Vunit=1e-3
+  if (document.RK.Vunit.value=="cm³/mol") Vunit=1e-6
   if (Vunit==0) { alert("volume unit not selected"); return }
 
   if (document.RK.Tunit.value=="K") Tunit=0.0
@@ -306,7 +306,7 @@ table {
 <table>
   <tr><td align=right>Critical temperature = </td><td> <INPUT TYPE="text" name="Tc" SIZE="10"></td><td align=right>Temperature = </td><td> <INPUT TYPE="text" name="T" SIZE="10"></td><td><input type="radio" name="Tunit" value="C">  °C</td><td><input type="radio" name="Tunit" value="K"> K</td></tr>
   <tr><td align=right>Critical pressure    = </td><td> <INPUT TYPE="text" name="Pc" SIZE="10"></td><td align=right>Pressure =    </td><td> <INPUT TYPE="text" NAME="P" SIZE="10"></td><td><input type="radio" name="Punit" value="Pa"> Pa</td><td><input type="radio" name="Punit" value="kPa"> kPa</td><td><input type="radio" name="Punit" value="bar"> bar</td><td><input type="radio" name="Punit" value="atm"> atm&nbsp;&nbsp;</td><td><input type="radio" name="Punit" value="MPa"> MPa</td></tr>
-  <tr><td><INPUT TYPE="button" onClick="Calculate()" VALUE="Calculate"></td><td></td><td align=right>Molar volume =</td><td> <INPUT TYPE="text" NAME="V" SIZE="10"></td><td><input type="radio" name="Vunit" value="m3/mol"> m³/mol</td><td><input type="radio" name="Vunit" value="dm3/mol"> dm³/mol</td><td><input type="radio" name="Vunit" value="cm3/mol"> cm³/mol</td></tr>
+  <tr><td><INPUT TYPE="button" onClick="Calculate()" VALUE="Calculate"></td><td></td><td align=right>Molar volume =</td><td> <INPUT TYPE="text" NAME="V" SIZE="10"></td><td><input type="radio" name="Vunit" value="m³/mol"> m³/mol</td><td><input type="radio" name="Vunit" value="dm³/mol"> dm³/mol</td><td><input type="radio" name="Vunit" value="cm³/mol"> cm³/mol</td></tr>
 </td></tr>
 </table>
 
@@ -333,7 +333,7 @@ table {
 &nbsp; 1&thinsp;atm = 101&thinsp;325&thinsp;Pa, 1&thinsp;bar = 100&thinsp;000&thinsp;Pa
 
 <p>
-  <a href="https://github.com/kolafaj/Redlich-Kwong/RK.pdf">Theory</a> &ndash;
+  <a href="https://kolafaj.github.io/REDLICH-KWONG/Redlich-Kwong.pdf">Theory</a> &ndash;
   <a href="http://old.vscht.cz/fch/cz/pomucky/fchab/fchab03.pdf#page=10">Theory (in Czech)</a> &ndash;
   <a href="http://old.vscht.cz/fch/prikladnik/prikladnik/tab/dot-crit.html">Critical data of selected gases</a> (in Czech) &ndash;
   <a href="http://old.vscht.cz/fch/software/redlich-kwong-index.html">Previous versions</a>
