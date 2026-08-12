@@ -3,14 +3,14 @@
 <HEAD>
    <TITLE>Redlich–Kwong equation of state calculator</TITLE>
    <META http-equiv="Content-Type" content="text/html; charset=UTF-8">
-   <meta name="author" content="Jiri Kolafa">
+   <meta name="author" content="Jiří Kolafa">
    <META name="keywords" LANG="en" content="redlich-kwong,applet,compressibility factor,fugacity">
 <!-- History:
-     2006 Version 0
+     2006 Version 0 -- reduced units only
      2020 Version 1 -- aesthetical changes, comments added, GPL3
      2020 Version 2 -- incl. entering Pc,Tc and units
      2020 Version 3 -- with (meta)stability detection
-     2025 Version 4 -- whites ignored in input, , replaced by .
+     2025 Version 4 -- whites ignored in input, ',' replaced by '.'
      2026              posted to GitHub
 -->
 
@@ -43,9 +43,8 @@ function Sqr(x)
   return x*x
 }
 
-/* Calculate volume for given (T,p).
-   sg=-1 for gas search, sg=1 for liquid search
-   Stable or metastable volumes only. */
+/* calculate volume for given (T,p), stable or metastable volumes only
+   sg=-1 for gas search, sg=1 for liquid search */
 function VRK(T,p,sg)
 {
   var d,q
@@ -63,7 +62,7 @@ function VRK(T,p,sg)
     d=pRK(T,V)-p
     if (sg*d<0) break;
     if (i>fine*5) {
-      //      alert("numerical problem");
+      /* alert("numerical problem"); */
       return 0; } }
   /* see gen/ms.c in MACSIMUS */
   MS_eps=1e-8;
@@ -121,7 +120,6 @@ function myEval(s)
 /* rounding */
 function myRound(x)
 {
-//  return Math.round(x*1000000.0)/1000000.0
   var q=1.0
   if (Math.abs(x)<1e-12) return 0.0;
   else if (Math.abs(x)<ROUND) {
@@ -194,7 +192,7 @@ function Calculate()
   Vr=myEval(document.RK.V.value)*Vunit*Pc/(R*Tc)
 
   if (document.RK.T.value.length==0) {
-    // calculate temperature by iterations
+    /* calculate temperature by iterations */
     if (Vr<=b) { alert("too small molar volume (Vr<=b) on input"); return }
     Tr=1;
     for (i=0; ; i++) {
@@ -206,38 +204,35 @@ function Calculate()
       if (Math.abs(Tr-Tr0)<1e-9) break; } }
 
   if (document.RK.P.value.length==0) {
-    // calculate pressure
+    /* calculate pressure */
     if (Vr<=b) { alert("too small molar volume (Vr<=b) on input"); return }
     Pr=pRK(Tr,Vr) }
 
-//  alert("Pr="+Pr+"  Vrl="+Vrl+"  Vrg="+Vrg+"  DF="+DF)
-
-  // calculate volume(s) and their stability
+  /* calculate volume(s) and their stability */
   if (Tr<=0) { alert("negative temperature (Tr<0)"); return 0 }
-  Vrg=VRK(Tr,Pr,-1); // init Vrg=id.gas; for Tr>1 this will give "fluid"
-  if (Vrg<=b) { alert("cannot find volume"); return; }
-  if (Tr<1) Vrl=VRK(Tr,Pr,1); // init=dense liquid
+  Vrg=VRK(Tr,Pr,-1); /* init Vrg=id.gas; for Tr>1 this will give "fluid" */
+  if (Vrg<=b) { alert("cannot find volume"); return }
+  if (Tr<1) Vrl=VRK(Tr,Pr,1); /* init=dense liquid */
   if (Vrl<=b) Vrl=0;
-  if (Math.abs(Vrl-Vrg)<1e-7) Vrl=0; // one root - may be gas or liquid, or close to CP
+  if (Math.abs(Vrl-Vrg)<1e-7) Vrl=0; /* one root - may be gas or liquid, or close to CP */
   if (Vrg!=0 && Vrl!=0) {
     if (Vrg<.333334 || Vrl>.333333) { alert("(l)/(g) problem"); return }
-    // two volumes found, determine the stability; this is equivalent to comparing phi
+    /* two volumes found, determine the stability;
+       this is equivalent to comparing phi */
     DF=Tr*Math.log((Vrg-b)/(Vrl-b))-a/b/Math.sqrt(Tr)*Math.log((1+b/Vrl)/(1+b/Vrg))-Pr*(Vrg-Vrl) }
 
-  if (Tr>=1) {
-    // supercritical
+  if (Tr>=1) { /* supercritical */
     if (document.RK.V.value.length==0) Vr=Vrg
     if (Math.abs((Vr-Vrg)/(Vr+Vrg))>1e-7) alert("internally inconsistent recalculation of volume")
     document.getElementById("liquid").innerHTML="n.a. (system is supercritical)"
     document.getElementById("gas").innerHTML="n.a. (system is supercritical)"
     zandphi("",Tr,Pr,Vr) }
-  else {
-    // subcritical
+  else { /* subcritical */
     document.getElementById("fluid").innerHTML="n.a. (system is subcritical)"
     document.getElementById("liquid").innerHTML="n.a."
     document.getElementById("gas").innerHTML="n.a."
     if (document.RK.V.value.length==0) {
-      // volumes have been calculated
+      /* volumes have been calculated */
       if (Vrg!=0 && Vrl!=0) {
         if (DF>0) {
           if (Vrg!=0) zandphi("",Tr,Pr,Vrg)
@@ -249,7 +244,7 @@ function Calculate()
         if (Vrg!=0) zandphi("",Tr,Pr,Vrg)
         if (Vrl!=0) zandphi("",Tr,Pr,Vrl) } }
     else {
-      // a volume given, T/P calculated
+      /* a volume given, T/P calculated */
       if (Vrg!=0 && Vrl!=0) {
         if (Vr>Vrl+1e-8 && Vr<Vrg-1e-7)
           zandphi("(unstable)",Tr,Pr,Vr)
@@ -295,13 +290,14 @@ table {
 <b>Usage:</b><br>
 <ul>
   <li>Enter the critical temperature and pressure.</li>
-  <li>Enter two of three quantities leaving blank the field to be calculated.</li>
+  <li>Enter two of three quantities, leaving blank the field to be calculated.</li>
   <li>Select units.</li>
   <li>Click <span class="butt">&nbsp;Calculate&nbsp;</span> to get the missing quantity, compressibility factor, and fugacity coefficient.</li>
   <li>With T,P given, metastable and unstable phases are not calculated.</li>
   <li>With Vm given, stability is reported for gas and liquid.</li>
   <li>Simple expressions (e.g., 100+273.15) are accepted in input fields.</li>
-  <li>Spaces, tabs ignored in the input fields, "," is replaced by "."</li>
+  <li>Spaces, tabs ignored in the input fields.</li>
+  <li>Both "." and "," can be used on input as the decimal separator.</li>
 </ul>
 
 <FORM NAME="RK" ACTION="dummy">
@@ -319,9 +315,9 @@ table {
 <p>
 <b>Results:</b><br>
 <table>
-<tr><td align=right><b>fluid:</b></td><td><span class="res" id="fluid">n.a.</span><td></tr>
-<tr><td align=right><b>gas:</b></td><td><span class="res" id="gas">n.a.</span><td></tr>
-<tr><td align=right><b>liquid:</b></td><td><span class="res" id="liquid">n.a.</span><td></tr>
+  <tr><td align=right><b>fluid:</b></td><td><span class="res" id="fluid">n.a.</span><td></tr>
+  <tr><td align=right><b>gas:</b></td><td><span class="res" id="gas">n.a.</span><td></tr>
+  <tr><td align=right><b>liquid:</b></td><td><span class="res" id="liquid">n.a.</span><td></tr>
 </table>
 
 <p>
@@ -343,9 +339,8 @@ table {
   <a href="http://old.vscht.cz/fch/software/redlich-kwong-index.html">Previous versions</a>
 </p>
 
-<p>
-<b>Author:</b><br>
-&copy; Jiří Kolafa (2006–2026) by the <a href="http://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License 3</a>
+<p><b>Author:</b><br>
+  &copy; Jiří Kolafa (2006–2026) by the <a href="http://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License 3</a>
 </p>
 </BODY>
 </HTML>

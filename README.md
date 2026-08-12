@@ -2,6 +2,8 @@
 
 Calculations with the Redlich–Kwong equation of state
 
+![open applet](https://kolafaj.github.io/REDLICH-KWONG/index.html)
+
 * Calculate pressure/volume/temperature, compressibility factor, and fugacity coefficient for liquid/gas/supercritical fluid
 * The cubic equation (to obtain volume or density) is solved numerically
 * The fugacity is based on an analytical formula
