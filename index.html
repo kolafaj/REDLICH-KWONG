@@ -273,11 +273,11 @@ function makeCalculator() {
   if (portrait) {
       html = `
 <table>
-  <tr><td align=right>Critical temperature = </td><td> <INPUT TYPE="text" name="Tc" SIZE="10"></td><td align=right>Temperature = </td><td> <INPUT TYPE="text" name="T" SIZE="10"></td><tr>
+  <tr><td align=right>Crit. temperature = </td><td> <INPUT TYPE="text" name="Tc" SIZE="8"></td><td align=right>Temperature = </td><td> <INPUT TYPE="text" name="T" SIZE="8"></td><tr>
     <tr class=highlight><td colspan=4 align=right><input type="radio" name="Tunit" value="C">  °C &nbsp; &nbsp; <input type="radio" name="Tunit" value="K"> K</td></tr>
-  <tr><td align=right>Critical pressure    = </td><td> <INPUT TYPE="text" name="Pc" SIZE="10"></td><td align=right>Pressure =    </td><td> <INPUT TYPE="text" NAME="P" SIZE="10"></td><tr>
+  <tr><td align=right>Crit. pressure    = </td><td> <INPUT TYPE="text" name="Pc" SIZE="8"></td><td align=right>Pressure =    </td><td> <INPUT TYPE="text" NAME="P" SIZE="8"></td><tr>
     <tr class=highlight><td colspan=4 align=right><input type="radio" name="Punit" value="Pa"> Pa &nbsp;&nbsp; <input type="radio" name="Punit" value="kPa"> kPa &nbsp;&nbsp; <input type="radio" name="Punit" value="bar"> bar  &nbsp;&nbsp; <input type="radio" name="Punit" value="atm"> atm &nbsp;&nbsp;<input type="radio" name="Punit" value="MPa"> MPa</td></tr>
-  <tr><td></td><td></td><td align=right>Molar volume =</td><td> <INPUT TYPE="text" NAME="V" SIZE="10"></td></tr>
+  <tr><td></td><td></td><td align=right>Molar volume =</td><td> <INPUT TYPE="text" NAME="V" SIZE="8"></td></tr>
   <tr class=highlight><td><INPUT TYPE="button" onClick="Calculate()" VALUE="Calculate"></td><td colspan=3 align=right><input type="radio" name="Vunit" value="m3/mol"> m³/mol &nbsp;&nbsp; <input type="radio" name="Vunit" value="dm3/mol"> dm³/mol  &nbsp;&nbsp; <input type="radio" name="Vunit" value="cm3/mol"> cm³/mol</td></tr>
 </table>`;
     } else {
@@ -303,6 +303,14 @@ body {
   font-size: medium;
 }
 
+@media (orientation: portrait) {
+    body {
+        width: 30em;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
 .butt {
   background: #e9e9ed;
 }
@@ -326,7 +334,7 @@ tr.highlight {
 
 <BODY BGCOLOR="#ffffff">
 
-<h1>Redlich–Kwong equation of state calculator (V4.1)</h1>
+<h1>Redlich–Kwong equation of state calculator</h1>
 
 <p>Calculate pressure/volume/temperature, compressibility factor, and fugacity coefficient for liquid/gas/supercritical fluid.</p>
 
@@ -376,7 +384,7 @@ tr.highlight {
   <a href="https://github.com/kolafaj/Redlich-Kwong/">Theory and info on GitHub</a> &ndash;
   <a href="http://old.vscht.cz/fch/cz/pomucky/fchab/fchab03.pdf#page=10">Theory (in Czech)</a> &ndash;
   <a href="http://old.vscht.cz/fch/prikladnik/prikladnik/tab/dot-crit.html">Critical data of selected gases (in Czech)</a> &ndash;
-  <a href="http://old.vscht.cz/fch/software/redlich-kwong-index.html">Previous versions</a>
+  <a href="http://old.vscht.cz/fch/software/redlich-kwong-index.html">Previous versions</a> (this is V4.1)
 </p>
 
 <p>
